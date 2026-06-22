@@ -59,63 +59,55 @@ export default function Search() {
         </p>
       </div>
 
-      {/* Input form */}
-      {!result && (
-        <form id="search-form" onSubmit={handleSubmit} className="search-form">
-          <div className="openai-input-container">
-            <textarea
-              id="question-input"
-              className="question-textarea"
-              placeholder="What do you want to learn today?"
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              rows={3}
-              disabled={loading}
-              maxLength={500}
-            />
-            
-            <div className="input-actions-row">
-              <span className="char-count">{question.length}/500</span>
-              
-              <button
-                id="search-submit"
-                type="submit"
-                className="btn-submit-icon"
-                disabled={loading || !question.trim()}
-              >
-                {loading ? (
-                  <span className="btn-spinner" style={{ width: '14px', height: '14px', borderColor: 'rgba(0,0,0,0.2)', borderTopColor: 'black' }} />
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-                )}
-              </button>
-            </div>
+      {/* Input form ALWAYS visible */}
+      <form id="search-form" onSubmit={handleSubmit} className="search-form" style={{ marginBottom: result ? '2rem' : '0' }}>
+        <div className="openai-input-container">
+          <textarea
+            id="question-input"
+            className="question-textarea"
+            placeholder="What do you want to learn today?"
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            rows={3}
+            disabled={loading}
+            maxLength={500}
+          />
+          
+          <div className="input-actions-row" style={{ justifyContent: 'flex-end' }}>
+            <button
+              id="search-submit"
+              type="submit"
+              className="btn-submit-icon"
+              disabled={loading || !question.trim()}
+            >
+              {loading ? (
+                <span className="btn-spinner" style={{ width: '14px', height: '14px', borderColor: 'rgba(0,0,0,0.2)', borderTopColor: 'black' }} />
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+              )}
+            </button>
           </div>
+        </div>
 
-          {error && (
-            <div className="error-alert" role="alert" style={{ marginTop: '1rem' }}>
-              {error}
-            </div>
-          )}
+        {error && (
+          <div className="error-alert" role="alert" style={{ marginTop: '1rem' }}>
+            {error}
+          </div>
+        )}
 
-          {loading && (
-            <p className="loading-hint" style={{ marginTop: '1rem' }}>
-              First request may take 20–30 seconds to warm up the AI model.
-            </p>
-          )}
-        </form>
-      )}
+        {loading && (
+          <p className="loading-hint" style={{ marginTop: '1rem' }}>
+            First request may take 20–30 seconds to warm up the AI model.
+          </p>
+        )}
+      </form>
 
-      {/* Results section */}
+      {/* Results section rendered below the form */}
       {result && (
         <div className="results-section">
-          {/* Your question + tag */}
-          <div className="result-header">
-            <div className="result-question-box">
-              <p className="result-label">Your question</p>
-              <p className="result-question-text">{question}</p>
-            </div>
-            <div className="tag-result">
+          {/* Tag Result */}
+          <div className="result-header" style={{ padding: '1.25rem' }}>
+            <div className="tag-result" style={{ textAlign: 'left' }}>
               <p className="result-label">Auto-tagged as</p>
               <span
                 className="tag-result-badge"
@@ -130,8 +122,7 @@ export default function Search() {
           <div className="similar-section">
             <h2 className="similar-title">
               {result.similar_questions.length > 0
-                ? `${result.similar_questions.length} Similar Question${result.similar_questions.length !== 1 ? "s" : ""
-                } Found`
+                ? `${result.similar_questions.length} Similar Question${result.similar_questions.length !== 1 ? "s" : ""} Found`
                 : "No Similar Questions Yet"}
             </h2>
 
@@ -146,26 +137,20 @@ export default function Search() {
                 </p>
               </div>
             ) : (
-              <div className="cards-grid">
+              <div className="faq-list">
                 {result.similar_questions.map((sq) => (
-                  <QuestionCard
-                    key={sq.question_id}
-                    question={sq.question_text}
-                    tag={null}
-                    score={sq.score}
-                  />
+                  <div key={sq.question_id} className="faq-list-item">
+                    <span className="faq-question-text">{sq.question_text}</span>
+                    <span className={`score-badge ${
+                      sq.score >= 0.7 ? "score-high" : sq.score >= 0.5 ? "score-medium" : "score-low"
+                    }`}>
+                      {Math.round(sq.score * 100)}% match
+                    </span>
+                  </div>
                 ))}
               </div>
             )}
           </div>
-
-          <button
-            id="search-reset"
-            className="btn-secondary"
-            onClick={handleReset}
-          >
-            ← Ask another question
-          </button>
         </div>
       )}
     </div>
