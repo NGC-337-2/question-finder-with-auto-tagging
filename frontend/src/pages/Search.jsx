@@ -35,7 +35,7 @@ export default function Search() {
     } catch (err) {
       setError(
         err.response?.data?.detail ||
-          "Something went wrong. Please try again."
+        "Something went wrong. Please try again."
       );
     } finally {
       setLoading(false);
@@ -62,48 +62,44 @@ export default function Search() {
       {/* Input form */}
       {!result && (
         <form id="search-form" onSubmit={handleSubmit} className="search-form">
-          <div className="textarea-wrapper">
+          <div className="openai-input-container">
             <textarea
               id="question-input"
               className="question-textarea"
-              placeholder="e.g. Why does photosynthesis need sunlight?"
+              placeholder="What do you want to learn today?"
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
-              rows={4}
+              rows={3}
               disabled={loading}
               maxLength={500}
             />
-            <span className="char-count">{question.length}/500</span>
+            
+            <div className="input-actions-row">
+              <span className="char-count">{question.length}/500</span>
+              
+              <button
+                id="search-submit"
+                type="submit"
+                className="btn-submit-icon"
+                disabled={loading || !question.trim()}
+              >
+                {loading ? (
+                  <span className="btn-spinner" style={{ width: '14px', height: '14px', borderColor: 'rgba(0,0,0,0.2)', borderTopColor: 'black' }} />
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                )}
+              </button>
+            </div>
           </div>
 
           {error && (
-            <div className="error-alert" role="alert">
+            <div className="error-alert" role="alert" style={{ marginTop: '1rem' }}>
               {error}
             </div>
           )}
 
-          <button
-            id="search-submit"
-            type="submit"
-            className="btn-primary"
-            disabled={loading || !question.trim()}
-          >
-            {loading ? (
-              <>
-                <span className="btn-spinner" />
-                Analysing question…
-              </>
-            ) : (
-              <>
-                <span style={{ display: "inline-flex", alignItems: "center", marginRight: "8px", verticalAlign: "middle" }}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                </span> Find Similar Questions
-              </>
-            )}
-          </button>
-
           {loading && (
-            <p className="loading-hint">
+            <p className="loading-hint" style={{ marginTop: '1rem' }}>
               First request may take 20–30 seconds to warm up the AI model.
             </p>
           )}
@@ -134,16 +130,15 @@ export default function Search() {
           <div className="similar-section">
             <h2 className="similar-title">
               {result.similar_questions.length > 0
-                ? `${result.similar_questions.length} Similar Question${
-                    result.similar_questions.length !== 1 ? "s" : ""
-                  } Found`
+                ? `${result.similar_questions.length} Similar Question${result.similar_questions.length !== 1 ? "s" : ""
+                } Found`
                 : "No Similar Questions Yet"}
             </h2>
 
             {result.similar_questions.length === 0 ? (
               <div className="empty-state">
                 <div className="empty-icon" style={{ color: "#10b981", marginBottom: "1rem" }}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" /><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" /></svg>
                 </div>
                 <p className="empty-text">
                   You're one of the first to ask this! Your question has been
