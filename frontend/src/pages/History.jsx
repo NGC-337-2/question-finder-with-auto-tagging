@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import client from "../api/client";
-import QuestionCard from "../components/QuestionCard";
 
 const ALL_TAGS = [
   "Biology",
@@ -13,11 +12,24 @@ const ALL_TAGS = [
   "Economics",
 ];
 
+const TAG_COLORS = {
+  Biology: { bg: "#dcfce7", color: "#166534", border: "#bbf7d0" },
+  Physics: { bg: "#dbeafe", color: "#1e40af", border: "#bfdbfe" },
+  Mathematics: { bg: "#fef9c3", color: "#854d0e", border: "#fef08a" },
+  History: { bg: "#fce7f3", color: "#9d174d", border: "#fbcfe8" },
+  Chemistry: { bg: "#ede9fe", color: "#5b21b6", border: "#ddd6fe" },
+  "Computer Science": { bg: "#ccfbf1", color: "#065f46", border: "#99f6e4" },
+  Geography: { bg: "#ffedd5", color: "#9a3412", border: "#fed7aa" },
+  Economics: { bg: "#f0fdf4", color: "#14532d", border: "#bbf7d0" },
+  default: { bg: "#f3f4f6", color: "#374151", border: "#e5e7eb" },
+};
+
 export default function History() {
   const [questions, setQuestions] = useState([]);
   const [activeTag, setActiveTag] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [expandedId, setExpandedId] = useState(null);
 
   const fetchHistory = async (tag = null) => {
     setLoading(true);
@@ -41,6 +53,11 @@ export default function History() {
     const newTag = tag === activeTag ? null : tag;
     setActiveTag(newTag);
     fetchHistory(newTag);
+    setExpandedId(null); // Collapse any expanded item on filter change
+  };
+
+  const toggleExpand = (id) => {
+    setExpandedId(expandedId === id ? null : id);
   };
 
   return (
@@ -48,7 +65,7 @@ export default function History() {
       <div className="history-hero">
         <h1 className="page-title">Your Question History</h1>
         <p className="page-subtitle">
-          Browse all the questions you've submitted, filtered by topic.
+          Browse all the questions you've submitted, filtered by topic. Click on a question to view similar matches.
         </p>
       </div>
 
@@ -103,16 +120,180 @@ export default function History() {
             {questions.length} question{questions.length !== 1 ? "s" : ""}
             {activeTag ? ` tagged as "${activeTag}"` : ""}
           </p>
-          <div className="cards-grid">
-            {questions.map((q) => (
-              <QuestionCard
-                key={q._id}
-                question={q.question_text}
-                tag={q.topic_tag}
-                date={q.created_at}
-                similarCount={q.similar_questions?.length ?? 0}
-              />
-            ))}
+          <div
+            className="faq-list"
+            style={{
+              border: "1px solid var(--border)",
+              borderRadius: "var(--radius-md)",
+              padding: "0.5rem 1.5rem",
+              background: "var(--bg-card)",
+            }}
+          >
+            {questions.map((q, idx) => {
+              const tagStyle = TAG_COLORS[q.topic_tag] || TAG_COLORS.default;
+              const isExpanded = expandedId === q._id;
+              return (
+                <div
+                  key={q._id || idx}
+                  className="faq-list-item"
+                  onClick={() => toggleExpand(q._id)}
+                  style={{
+                    borderBottom:
+                      idx === questions.length - 1 ? "none" : "1px solid var(--border)",
+                    padding: "1.25rem 0",
+                    display: "block",
+                    cursor: "pointer",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      gap: "1.5rem",
+                    }}
+                  >
+                    <div style={{ flex: 1 }}>
+                      <div
+                        className="faq-question-text"
+                        style={{
+                          padding: "0",
+                          fontSize: "1.05rem",
+                          fontWeight: "500",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "0.5rem",
+                        }}
+                      >
+                        <span
+                          style={{
+                            transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)",
+                            transition: "transform 0.2s",
+                            display: "inline-block",
+                            fontSize: "0.7rem",
+                            color: "var(--text-muted)",
+                          }}
+                        >
+                          ▶
+                        </span>
+                        {q.question_text}
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "1rem",
+                          marginTop: "0.5rem",
+                          fontSize: "0.8rem",
+                          color: "var(--text-muted)",
+                          paddingLeft: "1.2rem",
+                        }}
+                      >
+                        <span>
+                          {new Date(q.created_at).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </span>
+                        <span>•</span>
+                        <span>
+                          {q.similar_questions?.length ?? 0} similar match
+                          {(q.similar_questions?.length ?? 0) !== 1 ? "es" : ""} found
+                        </span>
+                      </div>
+                    </div>
+
+                    <span
+                      className="tag-badge"
+                      style={{
+                        backgroundColor: tagStyle.bg,
+                        color: tagStyle.color,
+                        border: `1px solid ${tagStyle.border}`,
+                        fontSize: "0.75rem",
+                        padding: "0.2rem 0.65rem",
+                        borderRadius: "999px",
+                        fontWeight: 600,
+                        flexShrink: 0,
+                      }}
+                    >
+                      {q.topic_tag}
+                    </span>
+                  </div>
+
+                  {/* Dropdown Section */}
+                  {isExpanded && (
+                    <div
+                      style={{
+                        marginTop: "1rem",
+                        marginLeft: "1.2rem",
+                        padding: "1rem 1.25rem",
+                        background: "rgba(255, 255, 255, 0.02)",
+                        borderRadius: "var(--radius-sm)",
+                        border: "1px solid var(--border)",
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <h4
+                        style={{
+                          margin: "0 0 0.75rem 0",
+                          fontSize: "0.82rem",
+                          fontWeight: 600,
+                          color: "var(--text-muted)",
+                          textTransform: "uppercase",
+                          letterSpacing: "0.05em",
+                        }}
+                      >
+                        Similar Questions Found
+                      </h4>
+                      {q.similar_questions && q.similar_questions.length > 0 ? (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                          {q.similar_questions.map((subQ, subIdx) => (
+                            <div
+                              key={subQ.question_id || subIdx}
+                              style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                paddingBottom:
+                                  subIdx === q.similar_questions.length - 1
+                                    ? 0
+                                    : "0.75rem",
+                                borderBottom:
+                                  subIdx === q.similar_questions.length - 1
+                                    ? "none"
+                                    : "1px solid rgba(255, 255, 255, 0.04)",
+                              }}
+                            >
+                              <span style={{ fontSize: "0.95rem", color: "var(--text-primary)" }}>
+                                {subQ.question_text}
+                              </span>
+                              <span
+                                className={`score-badge ${
+                                  Math.round(subQ.score * 100) >= 70
+                                    ? "score-high"
+                                    : Math.round(subQ.score * 100) >= 50
+                                    ? "score-medium"
+                                    : "score-low"
+                                }`}
+                                style={{ flexShrink: 0, marginLeft: "1rem" }}
+                              >
+                                {Math.round(subQ.score * 100)}% match
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p style={{ margin: 0, fontSize: "0.9rem", color: "var(--text-muted)" }}>
+                          No similar questions were found in the database.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </>
       )}
