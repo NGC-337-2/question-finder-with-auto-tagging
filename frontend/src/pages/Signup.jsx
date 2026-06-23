@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import PasswordStrengthBar from "../components/PasswordStrengthBar";
 
 export default function Signup() {
   const { signup } = useAuth();
@@ -81,6 +82,7 @@ export default function Signup() {
               minLength={8}
               autoComplete="new-password"
             />
+            <PasswordStrengthBar password={password} />
           </div>
 
           <div className="form-group">
