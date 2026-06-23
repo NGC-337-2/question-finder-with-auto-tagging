@@ -1,5 +1,4 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import client from "../api/client";
 
 const AuthContext = createContext(null);
@@ -9,10 +8,10 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if a token exists in localStorage on mount
-    const token = localStorage.getItem("token");
-    const email = localStorage.getItem("email");
-    const userId = localStorage.getItem("userId");
+    // Check if a token exists in sessionStorage on mount
+    const token = sessionStorage.getItem("access_token");
+    const email = sessionStorage.getItem("email");
+    const userId = sessionStorage.getItem("userId");
     if (token) {
       if (email) {
         setUser({ token, email, id: userId });
@@ -24,8 +23,8 @@ export function AuthProvider({ children }) {
           .then((res) => {
             const fetchedEmail = res.data.email;
             const fetchedId = res.data.id;
-            localStorage.setItem("email", fetchedEmail);
-            localStorage.setItem("userId", fetchedId);
+            sessionStorage.setItem("email", fetchedEmail);
+            sessionStorage.setItem("userId", fetchedId);
             setUser({ token, email: fetchedEmail, id: fetchedId });
           })
           .catch(() => {
@@ -39,7 +38,7 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     const res = await client.post("/auth/login", { email, password });
     const { access_token } = res.data;
-    localStorage.setItem("token", access_token);
+    sessionStorage.setItem("access_token", access_token);
     
     // Fetch user details immediately to get the user ID
     try {
@@ -48,11 +47,11 @@ export function AuthProvider({ children }) {
       });
       const fetchedEmail = meRes.data.email;
       const fetchedId = meRes.data.id;
-      localStorage.setItem("email", fetchedEmail);
-      localStorage.setItem("userId", fetchedId);
+      sessionStorage.setItem("email", fetchedEmail);
+      sessionStorage.setItem("userId", fetchedId);
       setUser({ token: access_token, email: fetchedEmail, id: fetchedId });
     } catch (err) {
-      localStorage.setItem("email", email);
+      sessionStorage.setItem("email", email);
       setUser({ token: access_token, email });
     }
     
@@ -64,11 +63,17 @@ export function AuthProvider({ children }) {
     return res.data;
   };
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("email");
-    localStorage.removeItem("userId");
-    setUser(null);
+  const logout = async () => {
+    try {
+      await client.post("/auth/logout");
+    } catch (err) {
+      console.error("Logout request failed:", err);
+    } finally {
+      sessionStorage.removeItem("access_token");
+      sessionStorage.removeItem("email");
+      sessionStorage.removeItem("userId");
+      setUser(null);
+    }
   };
 
   return (
