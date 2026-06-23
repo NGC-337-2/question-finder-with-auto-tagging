@@ -19,7 +19,8 @@ env/
 
 # Sentence Transformers model cache
 .cache/
-models/
+/models/
+
 
 # Node
 node_modules/

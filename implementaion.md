@@ -681,3 +681,81 @@ note: use:git version contreol properly.each file creation/modification commit w
 
 
 *Last updated: June 22, 2026*
+
+# Auth Improvement Plan
+
+Implementation details for Project B — Similar Question Finder auth upgrades.
+
+## User Review Required
+
+> [!IMPORTANT]
+> - **Command Execution**: According to the user rules, command execution will not be run automatically. We will list the exact commands step-by-step for you to run, or you can approve us to run them.
+> - **Dependency Additions**: We will add `slowapi==0.1.9` to `backend/requirements.txt`.
+> - **MongoDB Indexing/TTL**: A TTL index on the `sessions` collection will automatically delete expired session documents. MongoDB's background task runs approximately every 60 seconds to delete expired records.
+
+## Open Questions
+
+- None. The auth improvement plan outlines specific steps that are directly compatible with the current setup.
+
+## Proposed Changes
+
+---
+
+### Backend Components
+
+#### [MODIFY] [auth_utils.py](file:///d:/Project/question-finder-with-auto-tagging/backend/auth_utils.py)
+- Update to support refresh token generation and SHA-256 hashing.
+- Adjust `ACCESS_TOKEN_EXPIRE_MINUTES` to `15` minutes.
+- Re-use passlib context or existing bcrypt setup. Since the existing setup uses `bcrypt` directly, we can continue using `bcrypt` or import `passlib` to keep consistency. We will use `passlib.context` as suggested in the plan to simplify password hashing and verification compatibility.
+
+#### [MODIFY] [database.py](file:///d:/Project/question-finder-with-auto-tagging/backend/database.py)
+- Create index on `sessions` collection: `token_hash` (unique), `user_id`, and `expires_at` (TTL index).
+
+#### [MODIFY] [models/user.py](file:///d:/Project/question-finder-with-auto-tagging/backend/models/user.py)
+- Add field validators to `SignupRequest` to check length and complexity of passwords, and normalize emails.
+- Add validator to `LoginRequest` to cap password length to 128 characters to prevent bcrypt DoS.
+
+#### [MODIFY] [routers/auth.py](file:///d:/Project/question-finder-with-auto-tagging/backend/routers/auth.py)
+- Update `/signup` and `/login` to implement Pydantic validation error handling.
+- Modify `/login` to generate and save `refresh_token` hash in `sessions` collection, set it as `httpOnly` cookie, and return `access_token` in response body.
+- Add `/refresh` and `/logout` endpoints supporting token rotation and database/cookie clearing.
+- Integrate `slowapi` rate limiting on `/signup` (5/min), `/login` (10/min), and `/refresh` (30/min).
+
+#### [MODIFY] [main.py](file:///d:/Project/question-finder-with-auto-tagging/backend/main.py)
+- Set up `slowapi` limiter and add exception handler for `RateLimitExceeded`.
+
+#### [MODIFY] [requirements.txt](file:///d:/Project/question-finder-with-auto-tagging/backend/requirements.txt)
+- Add `slowapi==0.1.9`.
+
+---
+
+### Frontend Components
+
+#### [MODIFY] [client.js](file:///d:/Project/question-finder-with-auto-tagging/frontend/src/api/client.js)
+- Modify client base settings to send credentials (`withCredentials: true`).
+- Implement request interceptor to use `sessionStorage.getItem("access_token")`.
+- Implement response interceptor for silent token refresh on 401: call `/auth/refresh` endpoint and retry original request.
+
+#### [MODIFY] [AuthContext.jsx](file:///d:/Project/question-finder-with-auto-tagging/frontend/src/context/AuthContext.jsx)
+- Update `AuthProvider` to store access token in `sessionStorage` instead of `localStorage`.
+- Call `POST /auth/logout` endpoint during logout to revoke refresh token from MongoDB and clear cookies.
+
+#### [NEW] [PasswordStrengthBar.jsx](file:///d:/Project/question-finder-with-auto-tagging/frontend/src/components/PasswordStrengthBar.jsx)
+- Implement a password strength indicator with rules (8 characters minimum, letter, number).
+
+#### [MODIFY] [Signup.jsx](file:///d:/Project/question-finder-with-auto-tagging/frontend/src/pages/Signup.jsx)
+- Import and integrate `PasswordStrengthBar` underneath the password input.
+
+---
+
+## Verification Plan
+
+### Automated/Manual verification steps:
+1. Install new dependencies in the backend environment.
+2. Verify signup validation (try blank password, too short, no numbers, etc.).
+3. Verify password strength bar indicator responsiveness.
+4. Verify successful signup, login, and cookie generation (check DevTools Application tab -> Cookies to ensure `refresh_token` is present and marked `HttpOnly` and `SameSite=Lax`).
+5. Verify `/auth/me` and `/questions/search` access using the new access token.
+6. Verify access token expiry (can temporarily set `ACCESS_TOKEN_EXPIRE_MINUTES = 1` in `auth_utils.py` to test silent refresh automatically retrying requests).
+7. Verify logout deletes the refresh token session in MongoDB and removes the cookie.
+8. Verify rate limiting returns `429 Too Many Requests` when limits are exceeded.
