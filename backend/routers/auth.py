@@ -1,7 +1,7 @@
 """
 routers/auth.py — Authentication endpoints: signup and login.
 """
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from pymongo.errors import DuplicateKeyError
 
 from database import db
