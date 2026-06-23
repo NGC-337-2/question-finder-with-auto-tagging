@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import client from "../api/client";
 
 const TAG_COLORS = {
@@ -18,6 +18,17 @@ export default function Search() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [settingsTrigger, setSettingsTrigger] = useState(0);
+
+  useEffect(() => {
+    const handleSettingsUpdate = () => {
+      setSettingsTrigger((prev) => prev + 1);
+    };
+    window.addEventListener("settingsUpdated", handleSettingsUpdate);
+    return () => {
+      window.removeEventListener("settingsUpdated", handleSettingsUpdate);
+    };
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -53,6 +64,16 @@ export default function Search() {
   };
 
   const tagStyle = result ? (TAG_COLORS[result.topic_tag] || TAG_COLORS.default) : TAG_COLORS.default;
+
+  const thresholdSetting = parseFloat(localStorage.getItem("similarity_threshold") || "0.3");
+  const maxResultsSetting = parseInt(localStorage.getItem("max_similar_questions") || "5");
+
+  const displayQuestions = result?.similar_questions
+    ? result.similar_questions
+        .filter((q) => q.score >= thresholdSetting)
+        .slice(0, maxResultsSetting)
+    : [];
+
 
   return (
     <div className="page-container">
@@ -205,7 +226,7 @@ export default function Search() {
 
             {/* Similar Questions List (FAQ Style) */}
             <h3 className="similar-title">Similar Questions</h3>
-            {result.similar_questions && result.similar_questions.length > 0 ? (
+            {displayQuestions && displayQuestions.length > 0 ? (
               <div
                 className="faq-list"
                 style={{
@@ -215,13 +236,13 @@ export default function Search() {
                   background: "var(--bg-card)",
                 }}
               >
-                {result.similar_questions.map((q, idx) => (
+                {displayQuestions.map((q, idx) => (
                   <div
                     key={q.question_id || idx}
                     className="faq-list-item"
                     style={{
                       borderBottom:
-                        idx === result.similar_questions.length - 1
+                        idx === displayQuestions.length - 1
                           ? "none"
                           : "1px solid var(--border)",
                       padding: "1rem 0",
