@@ -1,8 +1,5 @@
 # Similar Question Finder
 
-## Option Chosen
-Option B — Similar Question Finder with Auto-Tagging
-
 ## Tech Stack
 - **Frontend:** React 18, React Router v6, Axios · Deployed on Vercel
 - **Backend:** FastAPI, Python 3.11, Motor (async MongoDB driver) · Deployed on Render
