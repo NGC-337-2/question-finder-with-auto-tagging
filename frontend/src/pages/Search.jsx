@@ -39,6 +39,13 @@ export default function Search() {
     }
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e);
+    }
+  };
+
   const handleReset = () => {
     setQuestion("");
     setResult(null);
@@ -73,6 +80,7 @@ export default function Search() {
             placeholder="Type or paste your question here..."
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
+            onKeyDown={handleKeyDown}
             disabled={loading}
             maxLength={1000}
             style={{
