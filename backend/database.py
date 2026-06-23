@@ -20,3 +20,12 @@ async def create_indexes():
     await db["questions"].create_index("user_id")
     await db["questions"].create_index("topic_tag")
     await db["questions"].create_index([("created_at", -1)])
+
+    # Auto-delete expired sessions — MongoDB runs this cleanup every 60 seconds
+    await db["sessions"].create_index(
+        "expires_at",
+        expireAfterSeconds=0    # delete document when expires_at < now
+    )
+    await db["sessions"].create_index("token_hash", unique=True)
+    await db["sessions"].create_index("user_id")
+
