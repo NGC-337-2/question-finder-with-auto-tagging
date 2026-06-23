@@ -9,9 +9,6 @@ export default function NavBar() {
   const navigate = useNavigate();
 
   const [isOpen, setIsOpen] = useState(false);
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
 
   // Settings State
   const [threshold, setThreshold] = useState(0.3);
@@ -23,22 +20,8 @@ export default function NavBar() {
   const isActive = (path) => location.pathname === path;
 
   // Toggle profile dropdown
-  const toggleDropdown = async () => {
-    const nextState = !isOpen;
-    setIsOpen(nextState);
-
-    if (nextState && !profile) {
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await client.get("/auth/me");
-        setProfile(res.data);
-      } catch (err) {
-        setError("Failed to load profile.");
-      } finally {
-        setLoading(false);
-      }
-    }
+  const toggleDropdown = () => {
+    setIsOpen(!isOpen);
   };
 
   // Close dropdown on click outside
@@ -86,7 +69,7 @@ export default function NavBar() {
     <nav className="navbar" style={{ position: "relative" }}>
       <div className="navbar-brand">
         <span className="brand-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
         </span>
         <span className="brand-text">QuestionFinder</span>
       </div>
@@ -127,7 +110,7 @@ export default function NavBar() {
               outline: "none",
             }}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
           </button>
 
           {/* Dropdown Mini Popup Window */}
@@ -159,22 +142,16 @@ export default function NavBar() {
                 <h4 style={{ margin: 0, fontSize: "0.8rem", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                   Account Info
                 </h4>
-                {loading ? (
-                  <div style={{ display: "flex", justifyContent: "center", padding: "0.5rem 0" }}>
-                    <span className="btn-spinner" />
+                <div style={{ marginTop: "0.5rem" }}>
+                  <div style={{ fontSize: "0.95rem", fontWeight: "600", color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {user?.email || "User Account"}
                   </div>
-                ) : error ? (
-                  <div style={{ color: "var(--error)", fontSize: "0.85rem", marginTop: "0.25rem" }}>{error}</div>
-                ) : profile ? (
-                  <div style={{ marginTop: "0.5rem" }}>
-                    <div style={{ fontSize: "0.95rem", fontWeight: "600", color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis" }}>
-                      {profile.email}
+                  {user?.id && (
+                    <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.25rem", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      ID: {user.id}
                     </div>
-                    <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.25rem" }}>
-                      Member since {new Date(profile.created_at).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
-                    </div>
-                  </div>
-                ) : null}
+                  )}
+                </div>
               </div>
 
               {/* Configuration Settings Section */}
