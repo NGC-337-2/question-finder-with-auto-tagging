@@ -16,6 +16,9 @@ from dotenv import load_dotenv
 from database import create_indexes
 from routers.auth import router as auth_router
 from routers.questions import router as questions_router
+from auth_utils import limiter
+from slowapi.errors import RateLimitExceeded
+from slowapi import _rate_limit_exceeded_handler
 
 load_dotenv()
 
@@ -24,6 +27,10 @@ app = FastAPI(
     description="Find semantically similar study questions with auto-tagging using sentence-transformers.",
     version="1.0.0",
 )
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 
 # ── CORS ────────────────────────────────────────────────────────────────────
 # Allow requests from the deployed Vercel frontend and local Vite dev server.

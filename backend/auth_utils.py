@@ -2,6 +2,8 @@
 auth_utils.py — JWT encode/decode and bcrypt password helpers.
 """
 import os
+import secrets
+import hashlib
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
@@ -10,6 +12,8 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
 import bcrypt
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from database import db
 
@@ -17,9 +21,26 @@ load_dotenv()
 
 JWT_SECRET = os.getenv("JWT_SECRET", "change-this-in-production")
 JWT_ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_EXPIRE_MINUTES", "1440"))
+ACCESS_TOKEN_EXPIRE_MINUTES = 15
 
 bearer_scheme = HTTPBearer()
+
+limiter = Limiter(key_func=get_remote_address)
+
+
+def create_refresh_token() -> tuple[str, str]:
+    """
+    Returns (raw_token, hashed_token).
+    Store only the hash in MongoDB. Send the raw token to the client.
+    """
+    raw = secrets.token_urlsafe(64)
+    hashed = hashlib.sha256(raw.encode()).hexdigest()
+    return raw, hashed
+
+
+def hash_refresh_token(raw: str) -> str:
+    return hashlib.sha256(raw.encode()).hexdigest()
+
 
 
 # ── Password helpers ────────────────────────────────────────────────────────
