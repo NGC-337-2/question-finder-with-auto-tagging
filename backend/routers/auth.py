@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException, status
 from pymongo.errors import DuplicateKeyError
 
 from database import db
-from auth_utils import hash_password, verify_password, create_access_token
+from auth_utils import hash_password, verify_password, create_access_token, get_current_user
 from models.user import SignupRequest, LoginRequest, TokenResponse
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -56,3 +56,15 @@ async def login(body: LoginRequest):
 
     token = create_access_token(str(user["_id"]))
     return {"access_token": token, "token_type": "bearer"}
+
+
+@router.get("/me")
+async def get_me(user=Depends(get_current_user)):
+    """
+    Get profile details of the current logged-in user.
+    """
+    return {
+        "id": str(user["_id"]),
+        "email": user["email"],
+        "created_at": user["created_at"].isoformat() if "created_at" in user else None
+    }
