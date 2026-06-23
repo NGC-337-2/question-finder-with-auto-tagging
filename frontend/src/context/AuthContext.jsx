@@ -35,6 +35,26 @@ export function AuthProvider({ children }) {
     setLoading(false);
   }, []);
 
+  useEffect(() => {
+    if (!user) return;
+
+    // Push a dummy state to history to capture the back button action
+    window.history.pushState(null, null, window.location.href);
+
+    const handlePopState = (event) => {
+      // Push state again to keep locking the back action
+      window.history.pushState(null, null, window.location.href);
+      // Revoke session and log out
+      logout();
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [user]);
+
+
   const login = async (email, password) => {
     const res = await client.post("/auth/login", { email, password });
     const { access_token } = res.data;
